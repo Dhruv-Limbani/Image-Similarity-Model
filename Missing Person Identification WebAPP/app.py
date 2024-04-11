@@ -5,6 +5,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import time,copy,random
 import os
+from fpdf import FPDF
+import base64
 
 if 'embedder' not in st.session_state:
     st.session_state['embedder'] = load_model("vgg_face_embedder.h5")
@@ -42,6 +44,9 @@ if 'dis_cp' not in st.session_state:
 if 'user_report' not in st.session_state:
     st.session_state['user_report'] = {}
 
+if 'report_pdf' not in st.session_state:
+    st.session_state['report_pdf'] = FPDF()
+
 def identify(inp_img):
     start = time.time()
     try:
@@ -49,7 +54,6 @@ def identify(inp_img):
         inp_faces = st.session_state['face_cascade'].detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
         ct = 0
         new_img = copy.deepcopy(inp_img)
-        # print("Maximum Probabilities:")
         person_dir = {}
         for (x, y, w, h) in inp_faces:
             ct+=1
@@ -59,18 +63,9 @@ def identify(inp_img):
             embedding_vector = st.session_state['embedder'].predict(np.expand_dims(img, axis=0),verbose=0)[0]
             embv_scaled = st.session_state['utils']['scaler'].transform([embedding_vector])
             embv_pca = st.session_state['utils']['pca'].transform(embv_scaled)
-            #name = le.inverse_transform(mlp.predict(embv_pca))[0][5:]
             probabs = st.session_state['face_rec_model'].predict(embv_pca,verbose=False)
             top_n_probabs = probabs[0][np.argsort(probabs).reshape(-1)[::-1][:]]
             top_n_names = st.session_state['utils']['le'].inverse_transform(np.argsort(probabs).reshape(-1)[::-1][:])
-            # max_indices = np.argsort(probabs)[-5:]
-            # names = st.session_state['utils']['le'].inverse_transform(max_indices)
-            # print(names)
-            # if np.max(probabs) > 0.90:
-            #     name = st.session_state['utils']['le'].inverse_transform([np.argmax(probabs)])[0][5:]
-            # else:
-            #     name = 'not recognized'
-            # print(np.max(probabs),"-", name)
             cv2.rectangle(new_img,(x,y),(x+w,y+h),(0,255,0),2)
             new_img = cv2.putText(new_img,str(ct),(x,y-10),cv2.FONT_HERSHEY_PLAIN,1,(255,0,255),2,cv2.LINE_4)
             st.session_state['person_dir'][ct] = {}
@@ -136,10 +131,17 @@ def login():
         pass
 
 def refresh_user_page():
+    st.session_state['login_submit_status'] = False
     st.session_state['identify_btn_status'] = False
     st.session_state['person_dir'] = {}
     st.session_state['dis_img'] = ""
     st.session_state['dis_cp'] = ""
+    st.session_state['user_report'] = {}
+    st.session_state['report_pdf'] = FPDF()
+
+def create_report_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download Report</a>'
 
 img_dir = r"D:\Users\DELL\Desktop\Major Project\105_classes_pins_dataset"
 
@@ -240,7 +242,7 @@ if choice == "User Login":
                                         path = os.path.join(img_dir,f"pins_{name}")
                                         ver_img = random.choice(os.listdir(path))
                                         ver_img_path = os.path.join(path,ver_img)
-                                        st.image(ver_img_path, caption=st.session_state['dis_cp'])
+                                        st.image(ver_img_path, caption=name)
                                         if st.checkbox(f"Select {name}",key=name+str(id)):
                                             if id not in st.session_state['user_report']['ids'].keys():
                                                 st.session_state['user_report']['ids'][id] = {name}
@@ -249,29 +251,42 @@ if choice == "User Login":
                     with col2:
                         r = st.button("Refresh")
         
-        chk_rep = st.button("Check My Report")
-        if chk_rep:
-            st.info("Captured Image:")
-            st.image(st.session_state['user_report']['captured_img'])
-            for id,names in st.session_state['user_report']['ids'].items():
-                st.info(f"Potential matches selected for ID-{id}:")
-                col4, col5 = st.columns([0.5,5])
-                with col5:
-                    for name in names:
-                        st.write(name)
-        sbt_rep = st.button("Submit Report")
-        if sbt_rep:
-            st.success("Success! Your identification report has been sent to the nearest authority.")
+            chk_rep = st.button("Check My Report")
+            if chk_rep:
+                st.info("Captured Image:")
+                st.image(st.session_state['user_report']['captured_img'])
+                shape = st.session_state['user_report']['captured_img'][...,::-1].shape
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font('Times', 'B', 16)
+                pdf.cell(40, 10, "Captured Image:")
+                cv2.imwrite("report_img.png", st.session_state['user_report']['captured_img'][...,::-1])
+                pdf.ln()
+                st.info(shape[0])
+                if(shape[0]>shape[1]):
+                    pdf.image("report_img.png",h=150)
+                else:
+                    pdf.image("report_img.png",w=150)
+                for id,names in st.session_state['user_report']['ids'].items():
+                    st.info(f"Potential matches selected for ID-{id}:")
+                    pdf.ln()
+                    pdf.set_font('Times', 'B', 16)
+                    pdf.cell(40, 10, f"Potential matches selected for ID-{id}:")
+                    col4, col5 = st.columns([0.5,5])
+                    with col5:
+                        for name in names:
+                            st.write(name)
+                            pdf.ln()
+                            pdf.set_font('Times',"", 12)
+                            pdf.cell(40, 10, f"\t{name}")
+                    st.session_state['report_pdf'] = pdf
+            sbt_rep = st.button("Submit Report")
+            if sbt_rep:
+                html = create_report_download_link(st.session_state['report_pdf'].output(dest="S").encode("latin-1"), "report")
+                st.markdown(html, unsafe_allow_html=True)
+        
         logout = st.button("Logout")
 
         if st.session_state['login_submit_status'] and logout:
             st.session_state['login_submit_status'] = False  # requires double click to logout 
             refresh_user_page()
-
-    
-
-    
-    
-        
-
-    
