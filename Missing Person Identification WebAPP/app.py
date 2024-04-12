@@ -111,9 +111,9 @@ def login():
 
     # Insert a form in the container
     with placeholder.form("login"):
-        st.markdown("#### Enter your credentials")
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
+        st.markdown("#### Enter your credentials 🪪")
+        email = st.text_input("Email :e-mail:")
+        password = st.text_input("Password 	:key:", type="password")
         submit = st.form_submit_button("Login")
 
     actual_email = "email"         #needs to be modified later on during db integration
@@ -124,7 +124,7 @@ def login():
         # clear the form/container and display a success message
         st.session_state['login_submit_status'] = True
         placeholder.empty()
-        st.success("Login successful")
+        st.success("Login successful :unlock:")
     elif submit and (email != actual_email or password != actual_password):
         st.error("Login failed")
     else:
@@ -148,49 +148,64 @@ img_dir = r"D:\Users\DELL\Desktop\Major Project\105_classes_pins_dataset"
 choice = st.sidebar.selectbox("Welcome!",["About","User Login"])
 
 if choice == "About":
-    st.title("Missing Person Identification System")
+    st.title("Missing Person Identification System :sleuth_or_spy:")
 
-    st.subheader("Final Year (Sem 8) - Major Project")
+    st.subheader("Final Year (Sem 8) - Major Project :computer: :bookmark_tabs:")
 
-    st.write("""Our work offers a novel method for identifying missing persons that makes use of recent developments in face recognition technology. Conventional techniques depend on figuring out how far apart picture embeddings are from one another by calculating distances between the embeddings, which can be computationally demanding, particularly when dealing with big datasets. Our process involves first extracting faces from images using OpenCV’s face extractor module, and then using VGGFace to turn those faces into embeddings. However, we employ Principal Component Analysis (PCA) to further reduce their dimensionality to 128-dimensional vectors rather than directly comparing embeddings. On the basis of these reduced embeddings, a Dense Neural Network is then trained. With this method, the traditional O(n) time for classification is greatly reduced to O(1). Our tests show that our methodology outperforms numerous other methods and reaches an excellent accuracy of 96%. This simplified method gives encouraging outcomes in situations involving missing persons identification in addition to increasing efficiency""")
+    st.subheader("Abstract:")
+    st.success("""Our work offers a novel method for identifying
+missing persons that makes use of recent developments in
+face recognition technology. Conventional techniques depend on
+converting images into embeddings and then figuring out how far
+apart picture embeddings are from one another by calculating
+distances between them, making it computationally demanding,
+particularly while dealing with huge databases. Our process
+involves first extracting faces from images using OpenCV’s face
+extractor module, and then using VGGFace to turn those faces
+into embeddings. However, we employ Principal Component
+Analysis (PCA) to further reduce their dimensionality to 128-
+dimensional vectors rather than directly comparing embeddings.
+On the basis of these reduced embeddings, a Dense Neural
+Network is then trained. With this method, the traditional O(n)
+time for classification is greatly reduced to O(1). Our tests show
+that our methodology outperforms numerous other methods and
+reaches an excellent accuracy of 98.75%. This simplified method
+gives encouraging outcomes in situations involving missing persons
+identification in addition to increasing efficiency.
+Index Terms—Face Extraction, Face Recognition, CNN, Deep
+Learning, PCA, Missing person Identification""")
 
-    st.subheader("Author Details:")
+    st.subheader("Authors :busts_in_silhouette::")
 
     col1,col2,col3 = st.columns(3)
 
-    fs = """------------Dhruv Limbani-------------
-                    ----------------Student------------------
-                    ---Department of Data Science----
-                    -------and Business Systems,-------
-                    --------School of Computing,--------
-                    ---SRM Institute of Science and----
-                    ---Technology, Kattankulathur-----
-                    ------603203, Chennai, India--------"""
-
     with col1:
-        st.write("""Dhruv Limbani, Student,
-    Department of Data Science
-    and Business Systems,
-    School of Computing,
-    SRM Institute of Science and
-    Technology, Kattankulathur
-    603203, Chennai, India""")
+        with st.popover("Dhruv Limbani"):
+            st.info("""Student,
+                Department of Data Science
+                and Business Systems,
+                School of Computing,
+                SRM Institute of Science and
+                Technology, Kattankulathur
+                603203, Chennai, India""")
     with col2:
-        st.write("""Abhishek Barhate, Student,
-    Department of Data Science
-    and Business Systems,
-    School of Computing,
-    SRM Institute of Science and
-    Technology, Kattankulathur
-    603203, Chennai, India""")
+        with st.popover("Abhishek Barhate"):
+            st.info("""Student,
+                Department of Data Science
+                and Business Systems,
+                School of Computing,
+                SRM Institute of Science and
+                Technology, Kattankulathur
+                603203, Chennai, India""")
     with col3:
-        st.write("""Hemavathi D, Associate Professor,
-    Department of Data Science
-    and Business Systems,
-    School of Computing,
-    SRM Institute of Science and
-    Technology, Kattankulathur
-    603203, Chennai, India""")
+        with st.popover("Hemavathi D"):
+            st.info("""Associate Professor,
+                Department of Data Science
+                and Business Systems,
+                School of Computing,
+                SRM Institute of Science and
+                Technology, Kattankulathur
+                603203, Chennai, India""")
 
     st.subheader("""Department of Data Science and Business Systems, School of Computing, SRM Institute of Science and Technology, Kattankulathur 603203, Chennai, India""")
 
@@ -200,24 +215,24 @@ if choice == "User Login":
         login()
 
     if st.session_state['login_submit_status']:
-        st.title("Upload Image")
+        st.title("Upload Image :outbox_tray:")
         uploaded_file = st.file_uploader("Only jpg or jpeg allowed")
         if uploaded_file:
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             image = cv2.imdecode(file_bytes, 1)
             st.image(image[...,::-1], caption="Uploaded Image")
+            st.info("Please Enter the details of person found :pencil:")
             with st.form("details"):
-                name = st.text_input("Name:")
+                name_of_person = st.text_input("Name:")
                 age = st.number_input("Age:",step=1)
                 gender = st.radio("Gender:",('Male', 'Female', 'Other'))
                 address = st.text_input("Address:")
                 loaction = st.text_input("Location of identification:")
                 submit_btn = st.form_submit_button("Submit")
-            
-            
-            identify_btn = st.button("Identify")
+                if submit_btn:
+                    st.success("Details Saved!")
+            identify_btn = st.button("Identify :mag:")
             if identify_btn:
-                refresh_user_page()
                 st.session_state['identify_btn_status'] = True
                 st.session_state['dis_img'], st.session_state['dis_cp'] = identify(image)
                 st.session_state['user_report'] = {"captured_img" : " ", "ids" : {}}
@@ -249,43 +264,73 @@ if choice == "User Login":
                                             else:
                                                 st.session_state['user_report']['ids'][id].add(name)
                     with col2:
-                        r = st.button("Refresh")
+                        r = st.button("Refresh :arrows_counterclockwise:")
         
-            chk_rep = st.button("Check My Report")
+            chk_rep = st.button("Check My Report :clipboard:")
             if chk_rep:
                 st.info("Captured Image:")
                 st.image(st.session_state['user_report']['captured_img'])
                 shape = st.session_state['user_report']['captured_img'][...,::-1].shape
                 pdf = FPDF()
                 pdf.add_page()
+                pdf.set_font('Times', 'B', 20)
+                pdf.cell(0, 10, "User Report", align='C')
+                pdf.ln()
                 pdf.set_font('Times', 'B', 16)
                 pdf.cell(40, 10, "Captured Image:")
                 cv2.imwrite("report_img.png", st.session_state['user_report']['captured_img'][...,::-1])
                 pdf.ln()
-                st.info(shape[0])
                 if(shape[0]>shape[1]):
                     pdf.image("report_img.png",h=150)
                 else:
                     pdf.image("report_img.png",w=150)
+                pdf.ln()
+                pdf.cell(40, 10, "Personal details of Reported Person: ")
+                pdf.ln()
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(15, 10, "Name: ")
+                pdf.set_font('Times', '', 12)
+                pdf.cell(40, 10, name_of_person)
+                pdf.ln()
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(10, 10, "Age: ")
+                pdf.set_font('Times', '', 12)
+                pdf.cell(40, 10, str(age))
+                pdf.ln()
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(18, 10, "Gender: ")
+                pdf.set_font('Times', '', 12)
+                pdf.cell(40, 10, gender)
+                pdf.ln()
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(18, 10, "Address: ")
+                pdf.set_font('Times', '', 12)
+                pdf.cell(80, 10, address)
+                pdf.ln()
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(50, 10, "Location of Identification: ")
+                pdf.set_font('Times', '', 12)
+                pdf.cell(80, 10, loaction)
+                pdf.add_page()
                 for id,names in st.session_state['user_report']['ids'].items():
-                    st.info(f"Potential matches selected for ID-{id}:")
+                    st.info(f"Potential matches reported by user for ID-{id}:")
                     pdf.ln()
                     pdf.set_font('Times', 'B', 16)
-                    pdf.cell(40, 10, f"Potential matches selected for ID-{id}:")
+                    pdf.cell(40, 10, f"Potential matches reported by user for ID-{id}:")
                     col4, col5 = st.columns([0.5,5])
                     with col5:
-                        for name in names:
-                            st.write(name)
+                        for i,nm in enumerate(names):
+                            st.write(nm)
                             pdf.ln()
                             pdf.set_font('Times',"", 12)
-                            pdf.cell(40, 10, f"\t{name}")
+                            pdf.cell(40, 10, f"\t\t\t\t\t{i+1}) {nm}")
                     st.session_state['report_pdf'] = pdf
-            sbt_rep = st.button("Submit Report")
+            sbt_rep = st.button("Submit Report :incoming_envelope:")
             if sbt_rep:
                 html = create_report_download_link(st.session_state['report_pdf'].output(dest="S").encode("latin-1"), "report")
                 st.markdown(html, unsafe_allow_html=True)
         
-        logout = st.button("Logout")
+        logout = st.button("Logout :end:")
 
         if st.session_state['login_submit_status'] and logout:
             st.session_state['login_submit_status'] = False  # requires double click to logout 
