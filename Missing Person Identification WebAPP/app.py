@@ -78,33 +78,6 @@ def identify(inp_img):
     except:
         st.error("Error")
 
-def identify_one(inp_img):
-    start = time.time()
-    try:
-        gray=cv2.cvtColor(inp_img, cv2.COLOR_BGR2GRAY)
-        inp_faces = st.session_state['face_cascade'].detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
-        new_img = copy.deepcopy(inp_img)
-        for (x, y, w, h) in inp_faces:
-            input_face_region = inp_img[y:y+h, x:x+w]
-            img = (input_face_region / 255.).astype(np.float32)
-            img = cv2.resize(img, dsize = (224,224))
-            embedding_vector = st.session_state['embedder'].predict(np.expand_dims(img, axis=0),verbose=0)[0]
-            embv_scaled = st.session_state['utils']['scaler'].transform([embedding_vector])
-            embv_pca = st.session_state['utils']['pca'].transform(embv_scaled)
-            probabs = st.session_state['face_rec_model'].predict(embv_pca,verbose=False)
-            if np.max(probabs) > 0.90:
-                name = st.session_state['utils']['le'].inverse_transform([np.argmax(probabs)])[0][5:]
-            else:
-                name = 'not recognized'
-            cv2.rectangle(new_img,(x,y),(x+w,y+h),(0,255,0),2)
-            new_img = cv2.putText(new_img,name,(x,y-10),cv2.FONT_HERSHEY_PLAIN,1,(255,0,255),2,cv2.LINE_4)
-        new_img = new_img[...,::-1]
-        st.image(new_img,caption=cp)
-        end = time.time()
-        cp = f"Total Execution Time: {'{:.2f}'.format((end-start)*1000)} ms"
-    except:
-        st.error("Error")
-
 def login():
     # Create an empty container
     placeholder = st.empty()
